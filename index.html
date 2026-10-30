@@ -896,5 +896,245 @@ function loadDashboard() {
 }
 </script>
 
+
+<section id="missedStudy" style="
+max-width:950px;
+margin:28px auto;
+padding:25px;
+background:white;
+border-radius:18px;
+box-shadow:0 8px 24px rgba(23,28,66,0.08);
+">
+
+<h2 style="color:#25245f;">Missed Study & Rescheduling</h2>
+<p>Plan your study tasks and reschedule unfinished tasks.</p>
+
+<label>Study Date</label>
+<input type="date" id="planDate">
+
+<label>Subject</label>
+<select id="planSubject">
+<option>Python</option>
+<option>Mathematics</option>
+<option>Computer Fundamentals</option>
+</select>
+
+<label>Study Task</label>
+<input type="text" id="planTask"
+placeholder="Example: Complete Python Loops">
+
+<button onclick="addStudyTask()"
+style="background:#5146a5;color:white;padding:12px 20px;border:0;border-radius:9px;margin-top:12px;">
+Add Study Task
+</button>
+
+<div id="plannedTasks" style="margin-top:20px;"></div>
+
+</section>
+
+<script>
+function todayForPlan() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function getStudyTasks() {
+  try {
+    return JSON.parse(
+      localStorage.getItem("studyMatePlannedTasks") || "[]"
+    );
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveStudyTasks(tasks) {
+  localStorage.setItem(
+    "studyMatePlannedTasks",
+    JSON.stringify(tasks)
+  );
+}
+
+function addStudyTask() {
+  const date = document.getElementById("planDate").value;
+  const subject = document.getElementById("planSubject").value;
+  const task = document.getElementById("planTask").value.trim();
+
+  if (!date || !task || date < todayForPlan()) {
+    alert("Enter a valid task and today or a future date.");
+    return;
+  }
+
+  const tasks = getStudyTasks();
+
+  tasks.push({
+    id: Date.now().toString() + Math.random().toString(16).slice(2),
+    date: date,
+    subject: subject,
+    task: task,
+    status: "planned",
+    rescheduleCount: 0
+  });
+
+  saveStudyTasks(tasks);
+
+  document.getElementById("planTask").value = "";
+  showStudyTasks();
+
+  alert("Study task added successfully!");
+}
+
+function updateStudyTask(id, changes) {
+  const tasks = getStudyTasks();
+  const task = tasks.find(t => t.id === id);
+
+  if (task) {
+    Object.assign(task, changes);
+    saveStudyTasks(tasks);
+    showStudyTasks();
+  }
+}
+
+function showStudyTasks() {
+  const list = document.getElementById("plannedTasks");
+  list.textContent = "";
+
+  const heading = document.createElement("h3");
+  heading.textContent = "My Study Tasks";
+  list.appendChild(heading);
+
+  const tasks = getStudyTasks().sort(
+    (a, b) => a.date.localeCompare(b.date)
+  );
+
+  if (tasks.length === 0) {
+    const msg = document.createElement("p");
+    msg.textContent = "No planned tasks yet.";
+    list.appendChild(msg);
+    return;
+  }
+
+  tasks.forEach(task => {
+    const card = document.createElement("div");
+    card.style.cssText =
+      "background:#f4f3ff;padding:16px;margin:12px 0;border-radius:10px;";
+
+    const title = document.createElement("h3");
+    title.textContent = task.subject;
+
+    const description = document.createElement("p");
+    description.textContent = "Task: " + task.task;
+
+    const date = document.createElement("p");
+    date.textContent = "Date: " + task.date;
+
+    const status = document.createElement("p");
+
+    let currentStatus = task.status;
+    if (currentStatus === "planned" && task.date < todayForPlan()) {
+      currentStatus = "overdue";
+    }
+
+    status.textContent = "Status: " +
+      (currentStatus === "overdue"
+        ? "Overdue – Not completed"
+        : currentStatus === "completed"
+        ? "Completed"
+        : currentStatus === "missed"
+        ? "Not Completed – Reschedule needed"
+        : "Planned");
+
+    card.appendChild(title);
+    card.appendChild(description);
+    card.appendChild(date);
+    card.appendChild(status);
+
+    if (task.status === "planned") {
+      const complete = document.createElement("button");
+      complete.textContent = "Mark Completed";
+      complete.style.cssText =
+        "background:#269968;color:white;padding:10px;border:0;border-radius:7px;margin:5px;";
+
+      complete.onclick = function() {
+        updateStudyTask(task.id, {status:"completed"});
+      };
+
+      const missed = document.createElement("button");
+      missed.textContent = "Not Completed";
+      missed.style.cssText =
+        "background:#c0392b;color:white;padding:10px;border:0;border-radius:7px;margin:5px;";
+
+      missed.onclick = function() {
+        updateStudyTask(task.id, {status:"missed"});
+      };
+
+      card.appendChild(complete);
+      card.appendChild(missed);
+    }
+
+    if (task.status === "missed") {
+      const newDate = document.createElement("input");
+      newDate.type = "date";
+      newDate.min = todayForPlan();
+      newDate.value = todayForPlan();
+      newDate.style.cssText =
+        "padding:10px;width:100%;box-sizing:border-box;margin:10px 0;";
+
+      const reschedule = document.createElement("button");
+      reschedule.textContent = "Reschedule Study";
+      reschedule.style.cssText =
+        "background:#5146a5;color:white;padding:10px;border:0;border-radius:7px;";
+
+      reschedule.onclick = function() {
+        if (!newDate.value || newDate.value < todayForPlan()) {
+          alert("Please select today or a future date.");
+          return;
+        }
+
+        updateStudyTask(task.id, {
+          date: newDate.value,
+          status: "planned",
+          rescheduleCount: (task.rescheduleCount || 0) + 1
+        });
+
+        alert("Study task rescheduled successfully!");
+      };
+
+      card.appendChild(newDate);
+      card.appendChild(reschedule);
+    }
+
+    if (task.status === "completed") {
+      const done = document.createElement("p");
+      done.textContent = "Great job! Keep learning.";
+      card.appendChild(done);
+    }
+
+    const remove = document.createElement("button");
+    remove.textContent = "Remove Task";
+    remove.style.cssText =
+      "background:#777;color:white;padding:8px;border:0;border-radius:7px;margin:8px 5px;";
+
+    remove.onclick = function() {
+      if (confirm("Remove this task?")) {
+        saveStudyTasks(getStudyTasks().filter(t => t.id !== task.id));
+        showStudyTasks();
+      }
+    };
+
+    card.appendChild(remove);
+    list.appendChild(card);
+  });
+}
+
+document.getElementById("planDate").min = todayForPlan();
+document.getElementById("planDate").value = todayForPlan();
+
+showStudyTasks();
+</script>
+
 </body>
 </html>
