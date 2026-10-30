@@ -1891,5 +1891,185 @@ displayDeadlines();
 })();
 </script>
 
+
+<!-- SMART DAILY PLANNER -->
+<section id="smartDailyPlanner" style="padding:20px;margin:20px 0;border:1px solid #ccc;border-radius:12px;">
+  <h2>📅 Smart Daily Planner</h2>
+  <p>Create your daily study plan based on your available time.</p>
+
+  <label>Today's Available Study Time (Hours)</label>
+  <input type="number" id="sdpHours" min="1" max="16" placeholder="Example: 4" style="width:100%;padding:10px;">
+
+  <br><br>
+  <label>Subject Name</label>
+  <input type="text" id="sdpSubject" placeholder="Example: Mathematics" style="width:100%;padding:10px;">
+
+  <br><br>
+  <label>Priority</label>
+  <select id="sdpPriority" style="width:100%;padding:10px;">
+    <option value="High">High</option>
+    <option value="Medium">Medium</option>
+    <option value="Low">Low</option>
+  </select>
+
+  <br><br>
+  <label>Deadline</label>
+  <input type="date" id="sdpDeadline" style="width:100%;padding:10px;">
+
+  <br><br>
+  <button type="button" id="sdpAdd" style="padding:10px 18px;background:#2563eb;color:white;border:0;border-radius:6px;">
+    Add Subject
+  </button>
+
+  <h3>My Subjects</h3>
+  <div id="sdpSubjects"></div>
+
+  <button type="button" id="sdpGenerate" style="padding:12px;background:#15803d;color:white;border:0;border-radius:6px;">
+    Generate Daily Study Plan
+  </button>
+
+  <h3>Today's Study Plan</h3>
+  <div id="sdpPlan"></div>
+  <p id="sdpSummary"></p>
+</section>
+
+<script>
+(function () {
+  const key = "studyMateDailyPlanner";
+  let subjects = [];
+
+  try {
+    subjects = JSON.parse(localStorage.getItem(key)) || [];
+    if (!Array.isArray(subjects)) subjects = [];
+  } catch (e) {
+    subjects = [];
+  }
+
+  const subjectInput = document.getElementById("sdpSubject");
+  const priorityInput = document.getElementById("sdpPriority");
+  const deadlineInput = document.getElementById("sdpDeadline");
+  const subjectsBox = document.getElementById("sdpSubjects");
+  const planBox = document.getElementById("sdpPlan");
+
+  function save() {
+    localStorage.setItem(key, JSON.stringify(subjects));
+  }
+
+  function renderSubjects() {
+    subjectsBox.replaceChildren();
+
+    subjects.forEach(function (subject, index) {
+      const card = document.createElement("div");
+      card.style.cssText = "padding:10px;margin:8px 0;border:1px solid #ddd;border-radius:8px;";
+
+      const info = document.createElement("p");
+      info.textContent = subject.name + " | Priority: " + subject.priority +
+        " | Deadline: " + (subject.deadline || "Not set");
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "Delete";
+      remove.addEventListener("click", function () {
+        subjects.splice(index, 1);
+        save();
+        renderSubjects();
+      });
+
+      card.append(info, remove);
+      subjectsBox.appendChild(card);
+    });
+
+    if (subjects.length === 0) {
+      subjectsBox.textContent = "No subjects added yet.";
+    }
+  }
+
+  document.getElementById("sdpAdd").addEventListener("click", function () {
+    const name = subjectInput.value.trim();
+
+    if (!name) {
+      alert("Please enter a subject name.");
+      return;
+    }
+
+    subjects.push({
+      name: name,
+      priority: priorityInput.value,
+      deadline: deadlineInput.value
+    });
+
+    save();
+    subjectInput.value = "";
+    deadlineInput.value = "";
+    renderSubjects();
+  });
+
+  document.getElementById("sdpGenerate").addEventListener("click", function () {
+    const hours = Number(document.getElementById("sdpHours").value);
+
+    if (!Number.isFinite(hours) || hours <= 0 || hours > 16) {
+      alert("Please enter available study time between 1 and 16 hours.");
+      return;
+    }
+
+    if (subjects.length === 0) {
+      alert("Please add at least one subject.");
+      return;
+    }
+
+    const priorityWeight = { High: 3, Medium: 2, Low: 1 };
+
+    const sorted = [...subjects].sort(function (a, b) {
+      const priorityDifference =
+        priorityWeight[b.priority] - priorityWeight[a.priority];
+
+      if (priorityDifference !== 0) return priorityDifference;
+      if (a.deadline && b.deadline) return a.deadline.localeCompare(b.deadline);
+      if (a.deadline) return -1;
+      if (b.deadline) return 1;
+      return 0;
+    });
+
+    const totalMinutes = hours * 60;
+    const weights = sorted.map(s => priorityWeight[s.priority]);
+    const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+
+    let remaining = totalMinutes;
+    planBox.replaceChildren();
+
+    sorted.forEach(function (subject, index) {
+      const minutes = index === sorted.length - 1
+        ? remaining
+        : Math.floor(totalMinutes * weights[index] / totalWeight);
+
+      remaining -= minutes;
+
+      const card = document.createElement("div");
+      card.style.cssText = "padding:12px;margin:8px 0;border:1px solid #ddd;border-radius:8px;";
+
+      const check = document.createElement("input");
+      check.type = "checkbox";
+
+      const label = document.createElement("label");
+      label.style.marginLeft = "8px";
+      label.textContent = subject.name + " — " +
+        Math.floor(minutes / 60) + " hr " + (minutes % 60) + " min";
+
+      check.addEventListener("change", function () {
+        label.style.textDecoration = check.checked ? "line-through" : "none";
+      });
+
+      card.append(check, label);
+      planBox.appendChild(card);
+    });
+
+    document.getElementById("sdpSummary").textContent =
+      "Total planned study time: " + hours + " hour(s).";
+  });
+
+  renderSubjects();
+})();
+</script>
+
 </body>
 </html>
