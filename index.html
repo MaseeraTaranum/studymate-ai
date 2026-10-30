@@ -354,5 +354,51 @@ function savePreviousMarks() {
 }
 </script>
 
+
+<section id="learningAnalysis">
+  <h2>Learning Analysis</h2>
+  <p>Your Previous Semester Performance</p>
+
+  <div id="analysisResult">
+    <p>Save your previous semester marks to view your analysis.</p>
+  </div>
+
+  <h3>Performance Improvement Tips</h3>
+  <ul>
+    <li>Study difficult subjects every day.</li>
+    <li>Practice questions regularly.</li>
+    <li>Revise your lessons weekly.</li>
+  </ul>
+</section>
+
+<script>
+function showLearningAnalysis() {
+  const saved = localStorage.getItem("previousSemesterMarks");
+  const result = document.getElementById("analysisResult");
+
+  if (!saved || !result) return;
+
+  const marks = JSON.parse(saved);
+  const percentage =
+    (Number(marks.obtained) / Number(marks.total)) * 100;
+
+  let level = "Needs Improvement";
+  if (percentage >= 75) {
+    level = "Excellent";
+  } else if (percentage >= 50) {
+    level = "Good";
+  }
+
+  result.innerHTML = `
+    <p>Academic Year: ${marks.year}</p>
+    <p>Semester: ${marks.semester}</p>
+    <p>Percentage: ${percentage.toFixed(2)}%</p>
+    <h3>Performance: ${level}</h3>
+  `;
+}
+
+showLearningAnalysis();
+</script>
+
 </body>
 </html>
