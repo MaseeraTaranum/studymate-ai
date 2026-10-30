@@ -1568,5 +1568,162 @@ function displayBacklogs() {
 displayBacklogs();
 </script>
 
+
+<!-- SMART DEADLINE ALERT -->
+<section id="deadlineManager" style="max-width:900px;margin:30px auto;padding:25px;background:white;border-radius:15px;box-shadow:0 5px 20px #00000010;">
+
+<h2>⏰ Smart Deadline Alert</h2>
+<p>Manage your assignments, projects and exams.</p>
+
+<label>Task Type</label>
+<select id="deadlineType" style="width:100%;padding:12px;margin:8px 0;">
+<option>Assignment</option>
+<option>Project</option>
+<option>Exam</option>
+<option>Record Submission</option>
+<option>Other</option>
+</select>
+
+<label>Task Name</label>
+<input id="deadlineTask" placeholder="Enter task name"
+style="width:100%;padding:12px;margin:8px 0;box-sizing:border-box;">
+
+<label>Deadline Date</label>
+<input type="date" id="deadlineDate"
+style="width:100%;padding:12px;margin:8px 0;box-sizing:border-box;">
+
+<button onclick="addDeadline()"
+style="background:#5146a5;color:white;padding:12px 20px;border:0;border-radius:8px;cursor:pointer;">
++ Add Deadline
+</button>
+
+<h3 style="margin-top:25px;">My Deadlines</h3>
+<div id="deadlineList"></div>
+</section>
+
+<script>
+(function(){
+
+const KEY = "studyMateDeadlines";
+
+function getData(){
+return JSON.parse(localStorage.getItem(KEY)||"[]");
+}
+
+window.addDeadline = function(){
+
+const type=document.getElementById("deadlineType").value;
+const task=document.getElementById("deadlineTask").value.trim();
+const date=document.getElementById("deadlineDate").value;
+
+if(!task || !date){
+alert("Please enter task name and deadline!");
+return;
+}
+
+if(date < new Date().toLocaleDateString("en-CA")){
+alert("Please select a future date!");
+return;
+}
+
+const data=getData();
+
+data.push({
+id:Date.now().toString()+Math.random().toString(16).slice(2),
+type,task,date,completed:false
+});
+
+localStorage.setItem(KEY,JSON.stringify(data));
+
+document.getElementById("deadlineTask").value="";
+document.getElementById("deadlineDate").value="";
+
+displayDeadlines();
+
+alert("Deadline added successfully!");
+};
+
+window.completeDeadline=function(id){
+const data=getData();
+const item=data.find(x=>x.id===id);
+if(item)item.completed=!item.completed;
+localStorage.setItem(KEY,JSON.stringify(data));
+displayDeadlines();
+};
+
+window.deleteDeadline=function(id){
+if(!confirm("Delete this deadline?"))return;
+const data=getData().filter(x=>x.id!==id);
+localStorage.setItem(KEY,JSON.stringify(data));
+displayDeadlines();
+};
+
+function displayDeadlines(){
+
+const list=document.getElementById("deadlineList");
+list.innerHTML="";
+
+const data=getData().sort((a,b)=>a.date.localeCompare(b.date));
+
+if(!data.length){
+list.textContent="No deadlines added yet.";
+return;
+}
+
+data.forEach(item=>{
+
+const card=document.createElement("div");
+card.style.cssText="background:#f4f3ff;padding:15px;margin:12px 0;border-radius:10px;";
+
+const title=document.createElement("h3");
+title.textContent=item.task;
+
+const type=document.createElement("p");
+type.textContent="Type: "+item.type;
+
+const date=document.createElement("p");
+date.textContent="Deadline: "+item.date;
+
+const status=document.createElement("p");
+if(item.completed){
+status.textContent="Completed ✓";
+status.style.color="green";
+}else{
+const today=new Date();
+today.setHours(0,0,0,0);
+const target=new Date(item.date+"T00:00:00");
+const days=Math.ceil((target-today)/86400000);
+
+status.textContent=days<0
+?"⚠️ Overdue!"
+:days===0
+?"🔔 Due Today!"
+:"⏳ "+days+" days remaining";
+
+status.style.color=days<=2?"#d97706":"#333";
+}
+
+const done=document.createElement("button");
+done.textContent=item.completed?"Undo":"Mark Completed";
+done.style.cssText="padding:9px;background:#5146a5;color:white;border:0;border-radius:6px;margin-right:8px;cursor:pointer;";
+done.onclick=()=>completeDeadline(item.id);
+
+const remove=document.createElement("button");
+remove.textContent="Delete";
+remove.style.cssText="padding:9px;background:#dc3545;color:white;border:0;border-radius:6px;cursor:pointer;";
+remove.onclick=()=>deleteDeadline(item.id);
+
+card.append(title,type,date,status,done,remove);
+list.appendChild(card);
+
+});
+
+}
+
+displayDeadlines();
+
+})();
+</script>
+
 </body>
 </html>
