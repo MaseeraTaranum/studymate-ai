@@ -467,5 +467,81 @@ function generateTimetable() {
 }
 </script>
 
+
+<section id="dailyProgress">
+  <h2>Daily Progress Tracker</h2>
+  <p>Track your daily learning progress!</p>
+
+  <label for="progressDate">Study Date:</label>
+  <input type="date" id="progressDate">
+
+  <br><br>
+
+  <label for="progressSubject">Select Subject:</label>
+  <select id="progressSubject">
+    <option value="Python">Python</option>
+    <option value="Mathematics">Mathematics</option>
+    <option value="Computer Fundamentals">Computer Fundamentals</option>
+  </select>
+
+  <br><br>
+
+  <label for="studyTime">Study Time (Hours):</label>
+  <input type="number" id="studyTime" min="0.5" max="24" step="0.5" placeholder="Example: 2">
+
+  <br><br>
+
+  <label for="completedTask">What did you complete?</label>
+  <input type="text" id="completedTask" placeholder="Example: Python Loops">
+
+  <br><br>
+
+  <button onclick="saveDailyProgress()">Save Daily Progress</button>
+
+  <div id="progressResult"></div>
+</section>
+
+<script>
+function saveDailyProgress() {
+  const date = document.getElementById("progressDate").value;
+  const subject = document.getElementById("progressSubject").value;
+  const hours = Number(document.getElementById("studyTime").value);
+  const task = document.getElementById("completedTask").value.trim();
+
+  if (!date || !hours || hours <= 0 || !task) {
+    alert("Please fill all the details correctly!");
+    return;
+  }
+
+  const progress = {
+    date: date,
+    subject: subject,
+    hours: hours,
+    task: task
+  };
+
+  let records = JSON.parse(
+    localStorage.getItem("dailyStudyProgress") || "[]"
+  );
+
+  records.push(progress);
+
+  localStorage.setItem(
+    "dailyStudyProgress",
+    JSON.stringify(records)
+  );
+
+  document.getElementById("progressResult").innerHTML =
+    "<h3>Progress Saved Successfully!</h3>" +
+    "<p>Date: " + date + "</p>" +
+    "<p>Subject: " + subject + "</p>" +
+    "<p>Study Hours: " + hours + "</p>" +
+    "<p>Completed Task: " + task + "</p>";
+
+  document.getElementById("studyTime").value = "";
+  document.getElementById("completedTask").value = "";
+}
+</script>
+
 </body>
 </html>
