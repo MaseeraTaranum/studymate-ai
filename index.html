@@ -1136,5 +1136,241 @@ document.getElementById("planDate").value = todayForPlan();
 showStudyTasks();
 </script>
 
+
+<!-- SMART STUDY GUIDE -->
+<section id="smartStudyGuide" style="
+max-width:950px;
+width:calc(100% - 40px);
+box-sizing:border-box;
+margin:28px auto;
+padding:25px;
+background:white;
+border-radius:18px;
+border:1px solid #e5e7f2;
+box-shadow:0 8px 24px rgba(23,28,66,0.08);
+">
+
+  <h2 style="color:#25245f;">📚 Smart Study Guide</h2>
+  <p>Enter your subject and topic to get a step-by-step study plan.</p>
+
+  <label for="smGuideSubject">Select Subject</label>
+  <select id="smGuideSubject" style="
+  display:block;width:100%;padding:12px;margin:8px 0 15px;
+  border:1px solid #d7d9e8;border-radius:9px;box-sizing:border-box;">
+    <option value="Python">Python Programming</option>
+    <option value="Mathematics">Mathematics</option>
+    <option value="Computer Fundamentals">Computer Fundamentals</option>
+    <option value="Other">Other Subject</option>
+  </select>
+
+  <label for="smGuideTopic">Enter Topic Name</label>
+  <input id="smGuideTopic" type="text"
+    placeholder="Example: Python Loops"
+    style="display:block;width:100%;padding:12px;margin:8px 0 15px;
+    border:1px solid #d7d9e8;border-radius:9px;box-sizing:border-box;">
+
+  <label for="smGuideDuration">Choose Study Duration</label>
+  <select id="smGuideDuration" style="
+  display:block;width:100%;padding:12px;margin:8px 0 15px;
+  border:1px solid #d7d9e8;border-radius:9px;box-sizing:border-box;">
+    <option value="30">30 Minutes</option>
+    <option value="45">45 Minutes</option>
+    <option value="60">60 Minutes</option>
+  </select>
+
+  <button id="smGenerateGuide" style="
+  background:#5146a5;color:white;padding:12px 22px;
+  border:0;border-radius:9px;cursor:pointer;font-weight:bold;">
+    Generate Study Guide
+  </button>
+
+  <div id="smGuideOutput" style="margin-top:22px;"></div>
+</section>
+
+<script>
+(function () {
+  const STORAGE_KEY = "studyMateSmartGuide";
+
+  const subjectInput = document.getElementById("smGuideSubject");
+  const topicInput = document.getElementById("smGuideTopic");
+  const durationInput = document.getElementById("smGuideDuration");
+  const generateButton = document.getElementById("smGenerateGuide");
+  const output = document.getElementById("smGuideOutput");
+
+  function createSteps(duration, subject) {
+    if (duration === 30) {
+      return [
+        "5 minutes: Understand the basic meaning of this topic.",
+        "10 minutes: Read the important concepts and notes.",
+        "10 minutes: Study examples and practise one question.",
+        "5 minutes: Recall what you learned without looking at notes."
+      ];
+    }
+
+    if (duration === 45) {
+      return [
+        "5 minutes: Understand the introduction and basic concepts.",
+        "15 minutes: Read the topic carefully and note key points.",
+        "15 minutes: Work through examples or practical exercises.",
+        "10 minutes: Revise and answer questions from memory."
+      ];
+    }
+
+    return [
+      "10 minutes: Understand the topic introduction and basics.",
+      "20 minutes: Study the important concepts in detail.",
+      "20 minutes: Practise examples, problems or exercises.",
+      "10 minutes: Revise the topic and test your understanding."
+    ];
+  }
+
+  function saveGuide(guide) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(guide));
+  }
+
+  function loadGuide() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function renderGuide(guide) {
+    output.replaceChildren();
+
+    if (!guide) {
+      return;
+    }
+
+    const heading = document.createElement("h3");
+    heading.textContent = "Your Personalized Study Steps";
+
+    const details = document.createElement("p");
+    details.textContent =
+      "Subject: " + guide.subject +
+      " | Topic: " + guide.topic +
+      " | Duration: " + guide.duration + " minutes";
+
+    const progressText = document.createElement("p");
+    const progressBar = document.createElement("div");
+    progressBar.style.cssText =
+      "height:10px;background:#e9e7f5;border-radius:10px;overflow:hidden;";
+
+    const progressFill = document.createElement("div");
+    progressFill.style.cssText =
+      "height:10px;background:#269968;border-radius:10px;transition:width .2s;";
+
+    const stepList = document.createElement("div");
+    stepList.style.marginTop = "15px";
+
+    function updateProgress() {
+      const completed = guide.steps.filter(step => step.done).length;
+      const percentage = Math.round(
+        completed / guide.steps.length * 100
+      );
+
+      progressText.textContent =
+        "Your Progress: " + completed + "/" +
+        guide.steps.length + " steps completed (" +
+        percentage + "%)";
+
+      progressFill.style.width = percentage + "%";
+
+      if (completed === guide.steps.length) {
+        progressText.textContent += " - Great job! Topic completed!";
+      }
+
+      saveGuide(guide);
+    }
+
+    guide.steps.forEach((step, index) => {
+      const card = document.createElement("div");
+      card.style.cssText =
+        "background:#f4f3ff;padding:14px;margin:10px 0;border-radius:10px;";
+
+      const label = document.createElement("label");
+      label.style.cssText =
+        "display:flex;align-items:flex-start;gap:10px;cursor:pointer;";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = step.done;
+      checkbox.style.marginTop = "5px";
+
+      const text = document.createElement("span");
+      text.textContent = "Step " + (index + 1) + ": " + step.text;
+
+      if (step.done) {
+        text.style.textDecoration = "line-through";
+        text.style.color = "#777";
+      }
+
+      checkbox.addEventListener("change", function () {
+        step.done = checkbox.checked;
+        text.style.textDecoration = step.done ? "line-through" : "none";
+        text.style.color = step.done ? "#777" : "#252545";
+        updateProgress();
+      });
+
+      label.appendChild(checkbox);
+      label.appendChild(text);
+      card.appendChild(label);
+      stepList.appendChild(card);
+    });
+
+    const note = document.createElement("p");
+    note.textContent =
+      "Study tip: Take short breaks if you feel tired. Practise what you learn.";
+    note.style.cssText =
+      "background:#effaf4;padding:12px;border-radius:8px;line-height:1.6;";
+
+    output.appendChild(heading);
+    output.appendChild(details);
+    output.appendChild(progressText);
+    progressBar.appendChild(progressFill);
+    output.appendChild(progressBar);
+    output.appendChild(stepList);
+    output.appendChild(note);
+
+    updateProgress();
+  }
+
+  generateButton.addEventListener("click", function () {
+    const subject = subjectInput.value;
+    const topic = topicInput.value.trim();
+    const duration = Number(durationInput.value);
+
+    if (!topic) {
+      alert("Please enter your study topic.");
+      topicInput.focus();
+      return;
+    }
+
+    const guide = {
+      subject: subject,
+      topic: topic,
+      duration: duration,
+      steps: createSteps(duration, subject).map(text => ({
+        text: text,
+        done: false
+      }))
+    };
+
+    saveGuide(guide);
+    renderGuide(guide);
+  });
+
+  const savedGuide = loadGuide();
+
+  if (savedGuide) {
+    subjectInput.value = savedGuide.subject;
+    topicInput.value = savedGuide.topic;
+    durationInput.value = String(savedGuide.duration);
+    renderGuide(savedGuide);
+  }
+})();
+</script>
+
 </body>
 </html>
