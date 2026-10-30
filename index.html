@@ -543,5 +543,77 @@ function saveDailyProgress() {
 }
 </script>
 
+
+<section id="weeklyReport">
+  <h2>Weekly Progress Report</h2>
+  <p>Check your study performance this week!</p>
+
+  <button onclick="generateWeeklyReport()">
+    Generate Weekly Report
+  </button>
+
+  <div id="weeklyReportResult"></div>
+</section>
+
+<script>
+function generateWeeklyReport() {
+  const records = JSON.parse(
+    localStorage.getItem("dailyStudyProgress") || "[]"
+  );
+
+  const today = new Date();
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(today.getDate() - 6);
+  startOfWeek.setHours(0, 0, 0, 0);
+
+  const weeklyRecords = records.filter(record => {
+    const recordDate = new Date(record.date + "T00:00:00");
+    return recordDate >= startOfWeek &&
+           recordDate <= today;
+  });
+
+  const result = document.getElementById("weeklyReportResult");
+
+  if (weeklyRecords.length === 0) {
+    result.innerHTML =
+      "<p>No study records found for this week. Save your daily progress first!</p>";
+    return;
+  }
+
+  const totalHours = weeklyRecords.reduce(
+    (sum, record) => sum + Number(record.hours), 0
+  );
+
+  const subjectHours = {};
+
+  weeklyRecords.forEach(record => {
+    subjectHours[record.subject] =
+      (subjectHours[record.subject] || 0) +
+      Number(record.hours);
+  });
+
+  const topSubject = Object.keys(subjectHours).reduce(
+    (a, b) => subjectHours[a] >= subjectHours[b] ? a : b
+  );
+
+  let html = "<h3>Your Weekly Summary</h3>";
+  html += "<p>Total Study Hours: " + totalHours + " hours</p>";
+  html += "<p>Study Sessions: " + weeklyRecords.length + "</p>";
+  html += "<p>Most Studied Subject: " + topSubject + "</p>";
+
+  html += "<h3>Subject-wise Report</h3><ul>";
+
+  Object.keys(subjectHours).forEach(subject => {
+    html += "<li>" + subject + ": " +
+      subjectHours[subject] + " hours</li>";
+  });
+
+  html += "</ul>";
+  html += "<p>Keep learning and improve every day!</p>";
+
+  result.innerHTML = html;
+}
+</script>
+
 </body>
 </html>
