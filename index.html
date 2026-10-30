@@ -678,5 +678,43 @@ function generateRecommendations() {
 }
 </script>
 
+
+<section id="studentDashboard">
+  <h2>Student Dashboard</h2>
+  <p>Your StudyMate AI Overview</p>
+
+  <div id="dashboardResult">
+    <button onclick="loadDashboard()">View My Dashboard</button>
+  </div>
+</section>
+
+<script>
+function loadDashboard() {
+  const marks = JSON.parse(
+    localStorage.getItem("previousSemesterMarks") || "null"
+  );
+
+  const progress = JSON.parse(
+    localStorage.getItem("dailyStudyProgress") || "[]"
+  );
+
+  const totalHours = progress.reduce(
+    (sum, item) => sum + Number(item.hours), 0
+  );
+
+  const percentage = marks && Number(marks.total) > 0
+    ? (Number(marks.obtained) / Number(marks.total) * 100).toFixed(2)
+    : "Not available";
+
+  document.getElementById("dashboardResult").innerHTML = `
+    <h3>My Academic Summary</h3>
+    <p>Previous Semester Percentage: ${percentage}${percentage === "Not available" ? "" : "%"}</p>
+    <p>Total Study Hours: ${totalHours}</p>
+    <p>Total Study Sessions: ${progress.length}</p>
+    <p>Keep learning and achieve your goals!</p>
+  `;
+}
+</script>
+
 </body>
 </html>
