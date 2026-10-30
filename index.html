@@ -400,5 +400,72 @@ function showLearningAnalysis() {
 showLearningAnalysis();
 </script>
 
+
+<section id="studyTimetable">
+  <h2>Personalized Study Timetable</h2>
+  <p>Create your own daily study plan!</p>
+
+  <label for="studyHours">Daily Study Hours:</label>
+  <select id="studyHours">
+    <option value="2">2 Hours</option>
+    <option value="3">3 Hours</option>
+    <option value="4">4 Hours</option>
+    <option value="5">5 Hours</option>
+    <option value="6">6 Hours</option>
+  </select>
+
+  <br><br>
+
+  <label for="weakSubject">Choose Your Weak Subject:</label>
+  <select id="weakSubject">
+    <option value="Python">Python</option>
+    <option value="Mathematics">Mathematics</option>
+    <option value="Computer Fundamentals">Computer Fundamentals</option>
+  </select>
+
+  <br><br>
+
+  <button onclick="generateTimetable()">
+    Generate My Timetable
+  </button>
+
+  <div id="timetableResult"></div>
+</section>
+
+<script>
+function generateTimetable() {
+  const hours = Number(document.getElementById("studyHours").value);
+  const weak = document.getElementById("weakSubject").value;
+
+  const subjects = [
+    weak,
+    "Mathematics",
+    "Python",
+    "Computer Fundamentals"
+  ];
+
+  const uniqueSubjects = [...new Set(subjects)];
+  const totalMinutes = hours * 60;
+  const weakMinutes = Math.round(totalMinutes * 0.4);
+  const otherMinutes = Math.floor(
+    (totalMinutes - weakMinutes) / (uniqueSubjects.length - 1)
+  );
+
+  let html = "<h3>Your Daily Study Timetable</h3>";
+  html += "<table border='1' cellpadding='10'>";
+  html += "<tr><th>Subject</th><th>Study Time</th></tr>";
+
+  uniqueSubjects.forEach((subject, index) => {
+    const minutes = index === 0 ? weakMinutes : otherMinutes;
+    html += `<tr><td>${subject}</td><td>${minutes} minutes</td></tr>`;
+  });
+
+  html += "</table>";
+  html += "<p>Tip: Take a 10-minute break between study sessions!</p>";
+
+  document.getElementById("timetableResult").innerHTML = html;
+}
+</script>
+
 </body>
 </html>
