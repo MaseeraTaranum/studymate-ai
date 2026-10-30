@@ -1382,5 +1382,191 @@ box-shadow:0 8px 24px rgba(23,28,66,0.08);
 })();
 </script>
 
+
+<!-- BACKLOG MANAGER -->
+<section id="backlogManager" style="max-width:900px;margin:30px auto;padding:25px;background:white;border-radius:15px;box-shadow:0 5px 20px #00000010;">
+
+  <h2>📚 My Backlog Manager</h2>
+  <p>Track your unfinished subjects and complete them on time.</p>
+
+  <label for="backlogSubject">Subject Name</label>
+  <input type="text" id="backlogSubject"
+    placeholder="Example: Mathematics"
+    style="width:100%;padding:12px;margin:8px 0;">
+
+  <label for="backlogTopic">Pending Topic</label>
+  <input type="text" id="backlogTopic"
+    placeholder="Example: Integration"
+    style="width:100%;padding:12px;margin:8px 0;">
+
+  <label for="backlogDate">Target Completion Date</label>
+  <input type="date" id="backlogDate"
+    style="width:100%;padding:12px;margin:8px 0;">
+
+  <button onclick="addBacklog()"
+    style="background:#5146a5;color:white;padding:12px 22px;border:0;border-radius:8px;margin:15px 0;cursor:pointer;">
+    + Add Backlog
+  </button>
+
+  <h3>Pending Topics</h3>
+  <div id="pendingBacklogs"></div>
+
+  <h3 style="margin-top:25px;">Completed Topics</h3>
+  <div id="completedBacklogs"></div>
+
+</section>
+
+<script>
+function getBacklogs() {
+  return JSON.parse(
+    localStorage.getItem("studyBacklogs") || "[]"
+  );
+}
+
+function addBacklog() {
+  const subject = document.getElementById("backlogSubject").value.trim();
+  const topic = document.getElementById("backlogTopic").value.trim();
+  const date = document.getElementById("backlogDate").value;
+
+  if (!subject || !topic || !date) {
+    alert("Please enter all backlog details!");
+    return;
+  }
+
+  const backlogs = getBacklogs();
+
+  backlogs.push({
+    id: Date.now().toString() + Math.random().toString(16).slice(2),
+    subject: subject,
+    topic: topic,
+    date: date,
+    completed: false
+  });
+
+  localStorage.setItem(
+    "studyBacklogs",
+    JSON.stringify(backlogs)
+  );
+
+  document.getElementById("backlogSubject").value = "";
+  document.getElementById("backlogTopic").value = "";
+  document.getElementById("backlogDate").value = "";
+
+  displayBacklogs();
+
+  alert("Backlog added successfully!");
+}
+
+function updateBacklog(id, completed) {
+  const backlogs = getBacklogs();
+
+  const item = backlogs.find(
+    b => b.id === id
+  );
+
+  if (item) {
+    item.completed = completed;
+    localStorage.setItem(
+      "studyBacklogs",
+      JSON.stringify(backlogs)
+    );
+  }
+
+  displayBacklogs();
+}
+
+function deleteBacklog(id) {
+  if (!confirm("Delete this backlog?")) return;
+
+  const backlogs = getBacklogs().filter(
+    b => b.id !== id
+  );
+
+  localStorage.setItem(
+    "studyBacklogs",
+    JSON.stringify(backlogs)
+  );
+
+  displayBacklogs();
+}
+
+function displayBacklogs() {
+  const backlogs = getBacklogs();
+
+  const pending = document.getElementById("pendingBacklogs");
+  const completed = document.getElementById("completedBacklogs");
+
+  pending.innerHTML = "";
+  completed.innerHTML = "";
+
+  function createBacklogCard(item) {
+    const card = document.createElement("div");
+
+    card.style.cssText =
+      "background:#f3f3ff;padding:15px;margin:12px 0;border-radius:10px;";
+
+    const title = document.createElement("h3");
+    title.textContent = item.subject;
+
+    const topic = document.createElement("p");
+    topic.textContent = "Topic: " + item.topic;
+
+    const date = document.createElement("p");
+    date.textContent = "Target Date: " + item.date;
+
+    const status = document.createElement("p");
+    status.textContent = item.completed
+      ? "Status: Completed"
+      : "Status: Pending";
+
+    const button = document.createElement("button");
+    button.textContent = item.completed
+      ? "Undo"
+      : "Mark as Completed";
+
+    button.style.cssText =
+      "padding:9px 14px;margin:8px 5px 0 0;background:#5146a5;color:white;border:0;border-radius:6px;cursor:pointer;";
+
+    button.onclick = function() {
+      updateBacklog(item.id, !item.completed);
+    };
+
+    const remove = document.createElement("button");
+    remove.textContent = "Delete";
+
+    remove.style.cssText =
+      "padding:9px 14px;background:#dc3545;color:white;border:0;border-radius:6px;cursor:pointer;";
+
+    remove.onclick = function() {
+      deleteBacklog(item.id);
+    };
+
+    card.append(title, topic, date, status, button, remove);
+
+    return card;
+  }
+
+  backlogs.forEach(item => {
+    const card = createBacklogCard(item);
+
+    if (item.completed) {
+      completed.appendChild(card);
+    } else {
+      pending.appendChild(card);
+    }
+  });
+
+  if (!backlogs.some(b => !b.completed)) {
+    pending.textContent = "No pending backlogs. Great job!";
+  }
+
+  if (!backlogs.some(b => b.completed)) {
+    completed.textContent = "No completed topics yet.";
+  }
+}
+
+displayBacklogs();
+</script>
+
 </body>
 </html>
