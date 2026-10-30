@@ -615,5 +615,68 @@ function generateWeeklyReport() {
 }
 </script>
 
+
+<section id="aiRecommendations">
+  <h2>AI Study Recommendations</h2>
+  <p>Get personalized suggestions for better learning.</p>
+
+  <button onclick="generateRecommendations()">
+    Get My Recommendations
+  </button>
+
+  <div id="recommendationResult"></div>
+</section>
+
+<script>
+function generateRecommendations() {
+  const marks = JSON.parse(
+    localStorage.getItem("previousSemesterMarks") || "null"
+  );
+
+  const progress = JSON.parse(
+    localStorage.getItem("dailyStudyProgress") || "[]"
+  );
+
+  let html = "<h3>Your Personalized Study Tips</h3>";
+
+  if (marks && Number(marks.total) > 0) {
+    const percentage =
+      Number(marks.obtained) / Number(marks.total) * 100;
+
+    if (percentage < 50) {
+      html += "<p>Focus more on basic concepts and daily revision.</p>";
+    } else if (percentage < 75) {
+      html += "<p>Practice more questions to improve your marks.</p>";
+    } else {
+      html += "<p>Great performance! Try advanced-level questions.</p>";
+    }
+  } else {
+    html += "<p>Add your semester marks to get performance-based tips.</p>";
+  }
+
+  if (progress.length > 0) {
+    const totals = {};
+
+    progress.forEach(item => {
+      totals[item.subject] =
+        (totals[item.subject] || 0) + Number(item.hours);
+    });
+
+    const weakest = Object.keys(totals).reduce(
+      (a, b) => totals[a] <= totals[b] ? a : b
+    );
+
+    html += "<p>Study suggestion: Spend more time on " +
+      weakest + " based on your recorded study hours.</p>";
+  } else {
+    html += "<p>Start tracking your daily study progress.</p>";
+  }
+
+  html += "<p>Tip: Study consistently and take short breaks.</p>";
+
+  document.getElementById("recommendationResult").innerHTML = html;
+}
+</script>
+
 </body>
 </html>
